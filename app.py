@@ -19,10 +19,19 @@ books = [
 
 @app.route('/')
 def hello_world():
+    '''
+
+    :return: A Hello World message
+    '''
     return 'Hello World!'
 
 
 def validBookObject(bookObject):
+    '''
+    validates book objects passed in
+    :param bookObject:
+    :return: Whether the bookObject is valid or not
+    '''
     if ('name' in bookObject and
             'price' in bookObject and
             'isbn' in bookObject):
@@ -33,7 +42,10 @@ def validBookObject(bookObject):
 
 @app.route('/books', methods=['POST'])
 def add_book():
-    # return jsonify(request.get_json())
+    '''
+
+    :return:
+    '''
     request_data = request.get_json()
     if(validBookObject(request_data)):
         new_book = {
@@ -68,6 +80,10 @@ def get_book_by_isbn(isbn):
                 'price': book['price'],
             }
     return jsonify(value)
+
+@app.route('/books/<int:isbn>', methods=['PUT'])
+def replace_book(isbn):
+    return jsonify(request.get_json())
 
 
 app.run(debug=True, port=5000)
