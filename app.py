@@ -47,11 +47,11 @@ def add_book():
     :return:
     '''
     request_data = request.get_json()
-    if(validBookObject(request_data)):
+    if (validBookObject(request_data)):
         new_book = {
-                'name': request_data['name'],
-                'price': request_data['price'],
-                'isbn': request_data['isbn']
+            'name': request_data['name'],
+            'price': request_data['price'],
+            'isbn': request_data['isbn']
         }
         books.insert(0, new_book)
         response = Response("", 201, mimetype='application/json')
@@ -62,7 +62,7 @@ def add_book():
             'error': 'Invalid book object passed in request',
             'helpString': "Data passed in similar to this {'name': 'bookname', 'price': 7.99, 'isbn': 'isbn number'}"
         }
-        response = Response(json.dumps(invalidBookObjectErrorMsg) , status=400, mimetype='appliation/json')
+        response = Response(json.dumps(invalidBookObjectErrorMsg), status=400, mimetype='appliation/json')
         return response
 
 
@@ -81,9 +81,39 @@ def get_book_by_isbn(isbn):
             }
     return jsonify(value)
 
+
 @app.route('/books/<int:isbn>', methods=['PUT'])
 def replace_book(isbn):
-    return jsonify(request.get_json())
+    request_data = request.get_json(force=True)
+    new_book = {
+        'name': request_data['name'],
+        'price': request_data['price'],
+        'isbn': request_data['isbn']
+    }
+    i = 0
+    for book in books:
+        currentIsbn = book['isbn']
+        if currentIsbn == isbn:
+            books[i] = new_book
+        i += 1
+    response = Response('', status=204)
+    return response
+
+
+@app.route('/update/<int:isbn>', methods=['PATCH'])
+def update_book(isbn):
+    request_data = request.get_json(force=True)
+    updated_book = {}
+    if ('name' in request_data):
+        updated_book['name'] = request_data['name']
+    if ('price' in request_data):
+        updated_book['price'] = request_data['price']
+    for book in books:
+        if book['isbn'] == isbn:
+            book.update(updated_book)
+    response = Response('', status=204)
+    response.headers['Location'] = '/books/' + str(isbn)
+    return response
 
 
 app.run(debug=True, port=5000)
