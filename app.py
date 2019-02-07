@@ -116,4 +116,21 @@ def update_book(isbn):
     return response
 
 
+@app.route('/delete/<int:isbn>', methods=['DELETE'])
+def delete_book(isbn):
+    i = 0
+    for book in books:
+        if book['isbn'] == isbn:
+            books.pop(i)
+            response = Response('', status=204)
+            return response
+        i += 1
+    invalidBookObjectErrorMsg = {
+        'error': 'Invalid book object passed in request',
+        'helpString': "Data passed in similar to this {'name': 'bookname', 'price': 7.99, 'isbn': 'isbn number'}"
+    }
+    response = Response(json.dumps(invalidBookObjectErrorMsg), status=400, mimetype='appliation/json')
+    return response
+
+
 app.run(debug=True, port=5000)
