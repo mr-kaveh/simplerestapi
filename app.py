@@ -1,7 +1,23 @@
 from flask import Flask, jsonify, request, Response
-import json
+import json, jwt, datetime
 from bookModel import *
+from userModel import *
 from settings import *
+from functools import wraps
+
+
+@app.route('/login', methods=['POST'])
+def get_token():
+    request_data = request.get_json()
+    username = str(request_data['username'])
+    password = str(request_data['password'])
+    match = User.username_password_match(username, password)
+    if match:
+        expiration_date = datetime.datetime.utcnow() + datetime.timedelta(seconds=100)
+        token = jwt.encode({'exp': expiration_date}, app.config['SECRET_KEY'], algorithm='HS256')
+        return token
+    else:
+        return Response('', 401, mimetype='application/json')
 
 
 def validBookObject(bookObject):
@@ -28,7 +44,7 @@ def add_book():
     if (validBookObject(request_data)):
         Book.add_book(request_data['name'], request_data['price'], request_data['isbn'])
         response = Response("", 201, mimetype='application/json')
-        response.headers['Location'] = '/books/' + str(new_book['isbn'])
+        response.headers['Location'] = '/books/' + str(request_data['isbn'])
         return response
     else:
         invalidBookObjectErrorMsg = {
@@ -39,8 +55,25 @@ def add_book():
         return response
 
 
+def token_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        token = request.args.get('token')
+        try:
+            jwt.decode(token, app.config['SECRET_KEY'])
+        except:
+            return jsonify({'error': 'Need a Valid Token To View This Page'}), 401
+    return wrapper
+
+
 @app.route('/books')
+@token_required
 def get_books():
+    token = request.args.get('token')
+    try:
+        jwt.decode(token, app.config['SECRET_KEY'])
+    except:
+        return jsonify({'error': 'Need a Valid Token To View This Page'}), 401
     return jsonify({'books': Book.get_all_books()})
 
 
