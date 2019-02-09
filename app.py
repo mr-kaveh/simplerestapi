@@ -35,6 +35,7 @@ def validBookObject(bookObject):
 
 
 @app.route('/books', methods=['POST'])
+@token_required
 def add_book():
     '''
 
@@ -61,6 +62,7 @@ def token_required(f):
         token = request.args.get('token')
         try:
             jwt.decode(token, app.config['SECRET_KEY'])
+            return f(*args, **kwargs)
         except:
             return jsonify({'error': 'Need a Valid Token To View This Page'}), 401
     return wrapper
@@ -69,20 +71,17 @@ def token_required(f):
 @app.route('/books')
 @token_required
 def get_books():
-    token = request.args.get('token')
-    try:
-        jwt.decode(token, app.config['SECRET_KEY'])
-    except:
-        return jsonify({'error': 'Need a Valid Token To View This Page'}), 401
     return jsonify({'books': Book.get_all_books()})
 
 
 @app.route('/books/<int:isbn>')
+@token_required
 def get_book_by_isbn(isbn):
     return jsonify(Book.get_book(isbn))
 
 
 @app.route('/books/<int:isbn>', methods=['PUT'])
+@token_required
 def replace_book(isbn):
     request_data = request.get_json(force=True)
     Book.replace_book(isbn, request_data['name'], request_data['price'])
@@ -91,6 +90,7 @@ def replace_book(isbn):
 
 
 @app.route('/update/<int:isbn>', methods=['PATCH'])
+@token_required
 def update_book(isbn):
     request_data = request.get_json(force=True)
     updated_book = {}
@@ -104,6 +104,7 @@ def update_book(isbn):
 
 
 @app.route('/delete/<int:isbn>', methods=['DELETE'])
+@token_required
 def delete_book(isbn):
     if (Book.delete_book(isbn)):
         response = Response('', status=204)
